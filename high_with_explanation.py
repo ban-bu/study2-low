@@ -35,7 +35,7 @@ GPT4O_MINI_BASE_URL = "https://api.deepbricks.ai/v1/"
 from svg_utils import convert_svg_to_png
 
 # 设置默认生成的关键词数量，取代UI上的选择按钮
-DEFAULT_KEYWORD_COUNT = 5  # 可以设置为1, 5, 10，分别对应原来的low, medium, high
+DEFAULT_KEYWORD_COUNT = 1  # 可以设置为1, 5, 10，分别对应原来的low, medium, high
 
 def get_ai_design_suggestions(user_preferences=None):
     """Get design suggestions from GPT-4o-mini with more personalized features"""
