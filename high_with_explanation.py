@@ -31,32 +31,12 @@ BASE_URL = "https://api.deepbricks.ai/v1/"
 GPT4O_MINI_API_KEY = "sk-lNVAREVHjj386FDCd9McOL7k66DZCUkTp6IbV0u9970qqdlg"
 GPT4O_MINI_BASE_URL = "https://api.deepbricks.ai/v1/"
 
-# 自定义SVG转PNG函数，不依赖外部库
-def convert_svg_to_png(svg_content):
-    """
-    将SVG内容转换为PNG格式的PIL图像对象
-    使用svglib库来处理，不再依赖cairosvg
-    """
-    try:
-        if SVGLIB_AVAILABLE:
-            # 使用svglib将SVG内容转换为PNG
-            from io import BytesIO
-            svg_bytes = BytesIO(svg_content)
-            drawing = svg2rlg(svg_bytes)
-            png_bytes = BytesIO()
-            renderPM.drawToFile(drawing, png_bytes, fmt="PNG")
-            png_bytes.seek(0)
-            return Image.open(png_bytes).convert("RGBA")
-        else:
-            st.error("SVG conversion libraries not available. Please install svglib and reportlab.")
-            return None
-    except Exception as e:
-        st.error(f"Error converting SVG to PNG: {str(e)}")
-        return None
+# 从svg_utils导入SVG转换函数
+from svg_utils import convert_svg_to_png
 
 # 设置实验组合参数，可通过改变这些参数控制实验条件
 # 输入复杂度：LOW=1关键词，HIGH=5关键词
-INPUT_COMPLEXITY = "HIGH"  # 可选值: "LOW" 或 "HIGH"
+INPUT_COMPLEXITY = "LOW"  # 可选值: "LOW" 或 "HIGH"
 
 # 推荐复杂度：LOW=1个设计，HIGH=3个设计
 RECOMMENDATION_COMPLEXITY = "LOW"  # 可选值: "LOW" 或 "HIGH"
@@ -155,7 +135,7 @@ def generate_vector_image(prompt):
             if image_resp.status_code == 200:
                 content_type = image_resp.headers.get("Content-Type", "")
                 if "svg" in content_type.lower():
-                    # 使用更新后的SVG处理函数
+                    # 使用集中的SVG处理函数
                     return convert_svg_to_png(image_resp.content)
                 else:
                     return Image.open(BytesIO(image_resp.content)).convert("RGBA")
@@ -470,19 +450,12 @@ def generate_multiple_designs(design_prompt, count=1):
     
     return designs
 
-def show_high_recommendation_without_explanation():
+def show_high_recommendation_with_explanation():
     st.title("👕 AI Recommendation Experiment Platform")
     st.markdown("### Study2-Let AI Design Your T-shirt")
     
-    # 获取实验参数
-    keyword_count = get_keyword_count()
-    design_count = get_design_count()
-    
-    # 显示实验组信息
-    input_level = "低" if INPUT_COMPLEXITY == "LOW" else "高"
-    recommendation_level = "低" if RECOMMENDATION_COMPLEXITY == "LOW" else "高"
-    
-    st.info(f"您当前在Study2中，输入复杂度:{input_level}（{keyword_count}个关键词），推荐复杂度:{recommendation_level}（{design_count}个设计）")
+    # 显示实验组和关键词数量信息
+    st.info(f"You are currently in Study2, and you need to provide {get_keyword_count()} keywords to describe your T-shirt design")
     
     # 初始化会话状态变量
     if 'user_prompt' not in st.session_state:
@@ -495,6 +468,14 @@ def show_high_recommendation_without_explanation():
         st.session_state.is_generating = False
     if 'should_generate' not in st.session_state:
         st.session_state.should_generate = False
+    if 'recommendation_level' not in st.session_state:
+        # 设置固定推荐级别，不再允许用户选择
+        if get_keyword_count() == 1:
+            st.session_state.recommendation_level = "low"
+        elif get_keyword_count() == 5:
+            st.session_state.recommendation_level = "medium"
+        else:  # 10或其他值
+            st.session_state.recommendation_level = "high"
     if 'generated_designs' not in st.session_state:
         st.session_state.generated_designs = []
     if 'selected_design_index' not in st.session_state:
@@ -557,15 +538,15 @@ def show_high_recommendation_without_explanation():
                             if i == st.session_state.selected_design_index:
                                 st.markdown(f"""
                                 <div style="border:3px solid #f63366; padding:3px; border-radius:5px;">
-                                <p style="text-align:center; color:#f63366; margin:0; font-weight:bold;">Design {i+1}</p>
+                                <p style="text-align:center; color:#f63366; margin:0; font-weight:bold;">设计 {i+1}</p>
                                 </div>
                                 """, unsafe_allow_html=True)
                             else:
-                                st.markdown(f"<p style='text-align:center;'>Design {i+1}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='text-align:center;'>设计 {i+1}</p>", unsafe_allow_html=True)
                             
                             # 显示设计并添加点击功能
                             st.image(design, use_container_width=True)
-                            if st.button(f"Select Design {i+1}", key=f"select_design_{i}"):
+                            if st.button(f"选择设计 {i+1}", key=f"select_design_{i}"):
                                 st.session_state.selected_design_index = i
                                 st.session_state.final_design = design
                                 st.session_state.design_info = st.session_state.generated_designs[i][1]
@@ -579,15 +560,15 @@ def show_high_recommendation_without_explanation():
                             if i == st.session_state.selected_design_index:
                                 st.markdown(f"""
                                 <div style="border:3px solid #f63366; padding:3px; border-radius:5px;">
-                                <p style="text-align:center; color:#f63366; margin:0; font-weight:bold;">Design {i+1}</p>
+                                <p style="text-align:center; color:#f63366; margin:0; font-weight:bold;">设计 {i+1}</p>
                                 </div>
                                 """, unsafe_allow_html=True)
                             else:
-                                st.markdown(f"<p style='text-align:center;'>Design {i+1}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='text-align:center;'>设计 {i+1}</p>", unsafe_allow_html=True)
                             
                             # 显示设计并添加点击功能
                             st.image(design, use_container_width=True)
-                            if st.button(f"Select Design {i+1}", key=f"select_design_{i}"):
+                            if st.button(f"选择设计 {i+1}", key=f"select_design_{i}"):
                                 st.session_state.selected_design_index = i
                                 st.session_state.final_design = design
                                 st.session_state.design_info = st.session_state.generated_designs[i][1]
@@ -602,22 +583,22 @@ def show_high_recommendation_without_explanation():
                             if i == st.session_state.selected_design_index:
                                 st.markdown(f"""
                                 <div style="border:3px solid #f63366; padding:3px; border-radius:5px;">
-                                <p style="text-align:center; color:#f63366; margin:0; font-weight:bold;">Design {i+1}</p>
+                                <p style="text-align:center; color:#f63366; margin:0; font-weight:bold;">设计 {i+1}</p>
                                 </div>
                                 """, unsafe_allow_html=True)
                             else:
-                                st.markdown(f"<p style='text-align:center;'>Design {i+1}</p>", unsafe_allow_html=True)
+                                st.markdown(f"<p style='text-align:center;'>设计 {i+1}</p>", unsafe_allow_html=True)
                             
                             # 显示设计并添加点击功能
                             st.image(design, use_container_width=True)
-                            if st.button(f"Select Design {i+1}", key=f"select_design_{i}"):
+                            if st.button(f"选择设计 {i+1}", key=f"select_design_{i}"):
                                 st.session_state.selected_design_index = i
                                 st.session_state.final_design = design
                                 st.session_state.design_info = st.session_state.generated_designs[i][1]
                                 st.rerun()
                 
                 # 添加确认选择按钮
-                if st.button("✅ Confirm Selection"):
+                if st.button("✅ 确认选择"):
                     selected_design, selected_info = st.session_state.generated_designs[st.session_state.selected_design_index]
                     st.session_state.final_design = selected_design
                     st.session_state.design_info = selected_info
@@ -636,78 +617,85 @@ def show_high_recommendation_without_explanation():
         # 设计提示词和推荐级别选择区
         st.markdown("### Design Options")
         
-        # 显示当前实验条件信息
+        # 移除推荐级别选择按钮，改为显示当前级别信息
+        if get_keyword_count() == 1:
+            level_text = "Low - requires 1 keyword"
+        elif get_keyword_count() == 5:
+            level_text = "Medium - requires 5 keywords"
+        else:  # 10或其他值
+            level_text = "High - requires 10 keywords"
+            
         st.markdown(f"""
         <div style="padding: 10px; background-color: #f0f2f6; border-radius: 5px; margin-bottom: 20px;">
-        <p style="margin: 0; font-size: 16px; font-weight: bold;">
-        当前设置：输入 {keyword_count} 个关键词，生成 {design_count} 个设计</p>
+        <p style="margin: 0; font-size: 16px; font-weight: bold;">Current involvement level: {level_text}</p>
         </div>
         """, unsafe_allow_html=True)
         
         # 提示词输入区
         st.markdown("#### Describe your desired T-shirt design:")
         
+        # 根据推荐级别设置关键词数量
+        num_keywords = get_keyword_count()
+        
         # 添加简短说明
         st.markdown(f"""
         <div style="margin-bottom: 15px; padding: 10px; background-color: #f0f2f6; border-radius: 5px;">
-        <p style="margin: 0; font-size: 14px;">输入{keyword_count}个关键词来描述您理想的T恤设计。
-        我们的AI将结合这些特点为您创建设计。</p>
+        <p style="margin: 0; font-size: 14px;">Enter {num_keywords} keyword{'s' if num_keywords > 1 else ''} to describe your ideal T-shirt design. 
+        Our AI will combine these features to create a unique design for you.</p>
         </div>
         """, unsafe_allow_html=True)
         
-        # 根据输入复杂度确定关键词输入方式
-        if keyword_count <= 3:
-            # 3个或更少关键词时使用并排显示
-            keyword_cols = st.columns(keyword_count)
+        # 初始化关键词状态
+        keywords = []
+        
+        # 根据设置的关键词数量动态创建输入框
+        if num_keywords == 1:
+            # 单个关键词输入框占满整行
+            if 'keyword1' not in st.session_state:
+                st.session_state.keyword1 = ""
             
-            # 初始化关键词状态
-            for i in range(1, keyword_count + 1):
-                key_name = f"keyword{i}"
-                if key_name not in st.session_state:
-                    st.session_state[key_name] = ""
-            
-            # 创建关键词输入框
-            keywords = []
-            for i in range(keyword_count):
-                key_name = f"keyword{i+1}"
-                with keyword_cols[i]:
-                    placeholder_texts = ["Style", "Theme", "Color"]
-                    placeholder_examples = ["casual, elegant", "nature, sports", "blue, vibrant"]
-                    placeholder = placeholder_texts[i % 3]
-                    example = placeholder_examples[i % 3]
-                    
-                    keyword = st.text_input(placeholder, 
-                                            value=st.session_state[key_name],
-                                            placeholder=f"e.g., {example}", 
-                                            key=f"input_{key_name}")
-                    keywords.append(keyword)
+            keyword = st.text_input("Keyword", value=st.session_state.keyword1, 
+                                   placeholder="e.g., casual blue nature", key="input_keyword1")
+            keywords.append(keyword)
         else:
-            # 多于3个关键词时使用多行显示
-            num_rows = (keyword_count + 2) // 3  # 向上取整，每行最多3个
-            keywords = []
+            # 创建多行输入框
+            keyword_rows = []
+            if num_keywords == 5:
+                # 5个关键词，每行2-3个
+                keyword_rows = [3, 2]
+            else:  # high - 10个关键词
+                # 10个关键词，每行2个
+                keyword_rows = [2, 2, 2, 2, 2]
             
-            for row in range(num_rows):
-                cols_in_this_row = min(3, keyword_count - row * 3)
-                row_cols = st.columns(cols_in_this_row)
+            keyword_index = 1
+            for row_idx, cols_in_row in enumerate(keyword_rows):
+                cols = st.columns(cols_in_row)
                 
-                for col in range(cols_in_this_row):
-                    idx = row * 3 + col
-                    key_name = f"keyword{idx+1}"
-                    
+                for col_idx in range(cols_in_row):
+                    key_name = f"keyword{keyword_index}"
                     if key_name not in st.session_state:
                         st.session_state[key_name] = ""
                     
-                    with row_cols[col]:
-                        keyword = st.text_input(f"关键词 {idx+1}", 
+                    with cols[col_idx]:
+                        keyword = st.text_input(f"Keyword {keyword_index}", 
                                                value=st.session_state[key_name],
-                                               placeholder=f"关键词 {idx+1}", 
+                                               placeholder=f"Keyword {keyword_index}", 
                                                key=f"input_{key_name}")
                         keywords.append(keyword)
+                    
+                    keyword_index += 1
+                    # 如果已经达到了所需的关键词数量，则停止
+                    if keyword_index > num_keywords:
+                        break
+                        
+                # 如果已经达到了所需的关键词数量，则停止
+                if keyword_index > num_keywords:
+                    break
         
         # 生成设计按钮
         generate_col = st.empty()
         with generate_col:
-            generate_button = st.button("🎨 生成T恤设计", key="generate_design", use_container_width=True)
+            generate_button = st.button("🎨 Generate T-shirt Design", key="generate_design", use_container_width=True)
         
         # 创建进度和消息区域在输入框下方
         progress_area = st.empty()
@@ -720,10 +708,10 @@ def show_high_recommendation_without_explanation():
                 key_name = f"keyword{i}"
                 st.session_state[key_name] = keyword
             
-            # 检查是否输入了足够的关键词
+            # 检查是否至少输入了一个关键词
             valid_keywords = [k for k in keywords if k]
-            if len(valid_keywords) < keyword_count:
-                message_area.error(f"请输入全部{keyword_count}个关键词")
+            if not valid_keywords:
+                message_area.error("Please enter at least one keyword")
             else:
                 # 组合关键词成为完整提示词
                 user_prompt = ", ".join(valid_keywords)
@@ -744,80 +732,42 @@ def show_high_recommendation_without_explanation():
                     
                     # 创建进度条和状态消息在输入框下方
                     progress_bar = progress_area.progress(0)
+                    
+                    # 获取需要生成的设计数量
+                    design_count = get_design_count()
                     message_area.info(f"AI正在为您生成{design_count}个设计，请稍候...")
                     
                     # 记录开始时间
                     start_time = time.time()
                     
-                    # 收集生成的设计
-                    designs = []
-                    
-                    # 生成单个设计的安全函数
-                    def generate_single_safely(variation_id=None):
-                        try:
-                            return generate_complete_design(user_prompt, variation_id)
-                        except Exception as e:
-                            message_area.error(f"生成设计时出错: {str(e)}")
-                            return None, {"error": f"生成设计失败: {str(e)}"}
-                    
-                    # 对于单个设计，直接生成
+                    # 根据推荐复杂度生成单个或多个设计
                     if design_count == 1:
-                        design, info = generate_single_safely()
-                        if design:
-                            designs.append((design, info))
+                        # 低推荐复杂度：生成单个设计
+                        design, info = generate_complete_design(user_prompt)
                         progress_bar.progress(100)
-                        message_area.success("设计生成完成！")
+                        
+                        if design:
+                            # 直接设置为最终设计
+                            st.session_state.final_design = design
+                            st.session_state.design_info = info
+                            message_area.success("设计生成完成！")
+                        else:
+                            message_area.error("无法生成设计。请重试。")
                     else:
-                        # 为多个设计使用并行处理
-                        completed_count = 0
+                        # 高推荐复杂度：生成多个设计
+                        designs = generate_multiple_designs(user_prompt, design_count)
                         
-                        # 进度更新函数
-                        def update_progress():
-                            nonlocal completed_count
-                            completed_count += 1
-                            progress = int(100 * completed_count / design_count)
-                            progress_bar.progress(progress)
-                            message_area.info(f"已生成 {completed_count}/{design_count} 个设计...")
-                        
-                        # 使用线程池并行生成多个设计
-                        with concurrent.futures.ThreadPoolExecutor(max_workers=design_count) as executor:
-                            # 提交所有任务
-                            future_to_id = {executor.submit(generate_single_safely, i): i for i in range(design_count)}
-                            
-                            # 收集结果
-                            for future in concurrent.futures.as_completed(future_to_id):
-                                design_id = future_to_id[future]
-                                try:
-                                    design, info = future.result()
-                                    if design:
-                                        designs.append((design, info))
-                                except Exception as e:
-                                    message_area.error(f"设计 {design_id} 生成失败: {str(e)}")
-                                
-                                # 更新进度
-                                update_progress()
-                        
-                        # 按照ID排序设计
-                        designs.sort(key=lambda x: x[1].get("variation_id", 0) if x[1] and "variation_id" in x[1] else 0)
+                        if designs:
+                            st.session_state.generated_designs = designs
+                            st.session_state.selected_design_index = 0
+                            message_area.success(f"已生成 {len(designs)} 个设计！")
+                        else:
+                            message_area.error("无法生成设计。请重试。")
                     
                     # 记录结束时间
                     end_time = time.time()
                     generation_time = end_time - start_time
-                    
-                    # 存储生成的设计
-                    if designs:
-                        if design_count == 1:
-                            # 单个设计直接设为最终设计
-                            st.session_state.final_design = designs[0][0]
-                            st.session_state.design_info = designs[0][1]
-                            message_area.success(f"设计生成完成！用时 {generation_time:.1f} 秒")
-                        else:
-                            # 多个设计保存到生成设计列表
-                            st.session_state.generated_designs = designs
-                            st.session_state.selected_design_index = 0
-                            message_area.success(f"已生成 {len(designs)} 个设计，用时 {generation_time:.1f} 秒！")
-                    else:
-                        message_area.error("无法生成设计。请重试。")
+                    message_area.success(f"设计生成完成！用时 {generation_time:.1f} 秒")
                     
                     # 重新渲染设计区域以显示新生成的设计
                     st.rerun()
@@ -829,21 +779,17 @@ def show_high_recommendation_without_explanation():
     # 下载按钮 (在主区域底部)
     if st.session_state.final_design is not None:
         st.markdown("---")
-        download_col, next_col = st.columns(2)
+        # 移除两列布局
+        # download_col, next_col = st.columns(2)
         
-        with download_col:
-            buf = BytesIO()
-            st.session_state.final_design.save(buf, format="PNG")
-            buf.seek(0)
-            st.download_button(
-                label="💾 下载设计",
-                data=buf,
-                file_name="ai_tshirt_design.png",
-                mime="image/png"
-            )
-        
-        with next_col:
-            # 确认完成按钮
-            if st.button("✅ 确认"):
-                st.session_state.page = "survey"
-                st.rerun()
+        # 直接显示下载按钮，不使用列布局
+        buf = BytesIO()
+        st.session_state.final_design.save(buf, format="PNG")
+        buf.seek(0)
+        st.download_button(
+            label="💾 下载设计图",
+            data=buf,
+            file_name="ai_tshirt_design.png",
+            mime="image/png",
+            use_container_width=True  # 使按钮占据整个宽度
+        )
