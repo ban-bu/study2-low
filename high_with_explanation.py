@@ -454,8 +454,15 @@ def show_high_recommendation_with_explanation():
     st.title("👕 AI Recommendation Experiment Platform")
     st.markdown("### Study2-Let AI Design Your T-shirt")
     
-    # 显示实验组和关键词数量信息
-    st.info(f"You are currently in Study2, and you need to provide {get_keyword_count()} keywords to describe your T-shirt design")
+    # 获取实验参数
+    keyword_count = get_keyword_count()
+    design_count = get_design_count()
+    
+    # 显示实验组和参数信息
+    input_level = "低" if INPUT_COMPLEXITY == "LOW" else "高"
+    recommendation_level = "低" if RECOMMENDATION_COMPLEXITY == "LOW" else "高"
+    
+    st.info(f"您当前在Study2中，输入复杂度:{input_level}（需要输入{keyword_count}个关键词），推荐复杂度:{recommendation_level}（AI将生成{design_count}个设计）")
     
     # 初始化会话状态变量
     if 'user_prompt' not in st.session_state:
