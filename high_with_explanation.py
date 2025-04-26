@@ -56,7 +56,7 @@ def convert_svg_to_png(svg_content):
 
 # 设置实验组合参数，可通过改变这些参数控制实验条件
 # 输入复杂度：LOW=1关键词，HIGH=5关键词
-INPUT_COMPLEXITY = "LOW"  # 可选值: "LOW" 或 "HIGH"
+INPUT_COMPLEXITY = "HIGH"  # 可选值: "LOW" 或 "HIGH"
 
 # 推荐复杂度：LOW=1个设计，HIGH=3个设计
 RECOMMENDATION_COMPLEXITY = "LOW"  # 可选值: "LOW" 或 "HIGH"
