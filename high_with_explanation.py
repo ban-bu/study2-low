@@ -459,10 +459,10 @@ def show_high_recommendation_with_explanation():
     design_count = get_design_count()
     
     # 显示实验组和参数信息
-    input_level = "低" if INPUT_COMPLEXITY == "LOW" else "高"
-    recommendation_level = "低" if RECOMMENDATION_COMPLEXITY == "LOW" else "高"
+    input_level = "LOW" if INPUT_COMPLEXITY == "LOW" else "HIGH"
+    recommendation_level = "LOW" if RECOMMENDATION_COMPLEXITY == "LOW" else "HIGH"
     
-    st.info(f"您当前在Study2中，输入复杂度:{input_level}（需要输入{keyword_count}个关键词），推荐复杂度:{recommendation_level}（AI将生成{design_count}个设计）")
+    st.info(f"You are currently in Study2, you need to input {keyword_count} keywords, and AI will generate {design_count} designs")
     
     # 初始化会话状态变量
     if 'user_prompt' not in st.session_state:
@@ -598,14 +598,14 @@ def show_high_recommendation_with_explanation():
                             
                             # 显示设计并添加点击功能
                             st.image(design, use_container_width=True)
-                            if st.button(f"选择设计 {i+1}", key=f"select_design_{i}"):
+                            if st.button(f"Confirm Design {i+1}", key=f"select_design_{i}"):
                                 st.session_state.selected_design_index = i
                                 st.session_state.final_design = design
                                 st.session_state.design_info = st.session_state.generated_designs[i][1]
                                 st.rerun()
                 
                 # 添加确认选择按钮
-                if st.button("✅ 确认选择"):
+                if st.button("✅ Confirm Selection"):
                     selected_design, selected_info = st.session_state.generated_designs[st.session_state.selected_design_index]
                     st.session_state.final_design = selected_design
                     st.session_state.design_info = selected_info
@@ -733,7 +733,7 @@ def show_high_recommendation_with_explanation():
                 try:
                     # 显示生成进度
                     with design_area.container():
-                        st.markdown("### 正在生成T恤设计")
+                        st.markdown("### Generating T-shirt design")
                         if st.session_state.original_tshirt is not None:
                             st.image(st.session_state.original_tshirt, use_container_width=True)
                     
@@ -742,7 +742,7 @@ def show_high_recommendation_with_explanation():
                     
                     # 获取需要生成的设计数量
                     design_count = get_design_count()
-                    message_area.info(f"AI正在为您生成{design_count}个设计，请稍候...")
+                    message_area.info(f"AI is generating {design_count} designs for you, please wait...")
                     
                     # 记录开始时间
                     start_time = time.time()
@@ -757,9 +757,9 @@ def show_high_recommendation_with_explanation():
                             # 直接设置为最终设计
                             st.session_state.final_design = design
                             st.session_state.design_info = info
-                            message_area.success("设计生成完成！")
+                            message_area.success("Design generated successfully!")
                         else:
-                            message_area.error("无法生成设计。请重试。")
+                            message_area.error("Failed to generate design. Please try again.")
                     else:
                         # 高推荐复杂度：生成多个设计
                         designs = generate_multiple_designs(user_prompt, design_count)
@@ -767,20 +767,20 @@ def show_high_recommendation_with_explanation():
                         if designs:
                             st.session_state.generated_designs = designs
                             st.session_state.selected_design_index = 0
-                            message_area.success(f"已生成 {len(designs)} 个设计！")
+                            message_area.success(f"Generated {len(designs)} designs!")
                         else:
-                            message_area.error("无法生成设计。请重试。")
+                            message_area.error("Failed to generate design. Please try again.")
                     
                     # 记录结束时间
                     end_time = time.time()
                     generation_time = end_time - start_time
-                    message_area.success(f"设计生成完成！用时 {generation_time:.1f} 秒")
+                    message_area.success(f"Design generated successfully! Time taken: {generation_time:.1f} seconds")
                     
                     # 重新渲染设计区域以显示新生成的设计
                     st.rerun()
                 except Exception as e:
                     import traceback
-                    message_area.error(f"发生错误: {str(e)}")
+                    message_area.error(f"An error occurred: {str(e)}")
                     st.error(traceback.format_exc())
     
     # 下载按钮 (在主区域底部)
@@ -794,7 +794,7 @@ def show_high_recommendation_with_explanation():
         st.session_state.final_design.save(buf, format="PNG")
         buf.seek(0)
         st.download_button(
-            label="💾 下载设计图",
+            label="💾 Download Design",
             data=buf,
             file_name="ai_tshirt_design.png",
             mime="image/png",
